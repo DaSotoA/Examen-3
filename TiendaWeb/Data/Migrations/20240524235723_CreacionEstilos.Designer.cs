@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TiendaWeb.Data;
 
@@ -11,9 +12,11 @@ using TiendaWeb.Data;
 namespace TiendaWeb.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240524235723_CreacionEstilos")]
+    partial class CreacionEstilos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -224,34 +227,6 @@ namespace TiendaWeb.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("TiendaWeb.Models.Cerveza", b =>
-                {
-                    b.Property<int>("id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
-
-                    b.Property<double>("alcohol")
-                        .HasColumnType("float");
-
-                    b.Property<int>("idEstilo")
-                        .HasColumnType("int");
-
-                    b.Property<string>("name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("precio")
-                        .HasColumnType("float");
-
-                    b.HasKey("id");
-
-                    b.HasIndex("idEstilo");
-
-                    b.ToTable("Cervezas");
-                });
-
             modelBuilder.Entity("TiendaWeb.Models.Estilo", b =>
                 {
                     b.Property<int>("id")
@@ -318,17 +293,6 @@ namespace TiendaWeb.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("TiendaWeb.Models.Cerveza", b =>
-                {
-                    b.HasOne("TiendaWeb.Models.Estilo", "Estilo")
-                        .WithMany()
-                        .HasForeignKey("idEstilo")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Estilo");
                 });
 #pragma warning restore 612, 618
         }

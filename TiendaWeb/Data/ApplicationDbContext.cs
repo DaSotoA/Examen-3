@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using TiendaWeb.Models;
 
 namespace TiendaWeb.Data
 {
@@ -9,5 +10,7 @@ namespace TiendaWeb.Data
             : base(options)
         {
         }
+        public DbSet<Estilo> Estilos { get; set; }
+        public DbSet<Cerveza> Cervezas { get; set; }
     }
 }
