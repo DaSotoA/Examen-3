@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,14 +11,17 @@ using TiendaWeb.Models;
 
 namespace TiendaWeb.Areas.Admin.Controllers
 {
+    [Authorize(Roles ="Admin")]
     [Area("Admin")]
     public class CervezasController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _hostEnviroment;
 
-        public CervezasController(ApplicationDbContext context)
+        public CervezasController(ApplicationDbContext context, IWebHostEnvironment hostEnviroment)
         {
             _context = context;
+            _hostEnviroment = hostEnviroment;
         }
 
         // GET: Admin/Cervezas
@@ -58,10 +62,23 @@ namespace TiendaWeb.Areas.Admin.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("id,name,alcohol,idEstilo,precio")] Cerveza cerveza)
+        public async Task<IActionResult> Create([Bind("id,name,alcohol,idEstilo,precio,UrlImagen")] Cerveza cerveza)
         {
             if (ModelState.IsValid)
             {
+                string rutaPrincipal = _hostEnviroment.WebRootPath;
+                var archivos = HttpContext.Request.Form.Files;
+                if(archivos.Count > 0)
+                {
+                    string nombreArchivo = Guid.NewGuid().ToString();
+                    var subidas = Path.Combine(rutaPrincipal, @"imagenes\cervezas");
+                    var extension = Path.GetExtension(archivos[0].FileName);
+                    using (var fileStream = new FileStream(Path.Combine(subidas,nombreArchivo+extension), FileMode.Create))
+                    {
+                        archivos[0].CopyTo(fileStream);
+                    }
+                    cerveza.UrlImagen = @"imagenes\cervezas\" + nombreArchivo + extension;
+                }
                 _context.Add(cerveza);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -92,7 +109,7 @@ namespace TiendaWeb.Areas.Admin.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("id,name,alcohol,idEstilo,precio")] Cerveza cerveza)
+        public async Task<IActionResult> Edit(int id, [Bind("id,name,alcohol,idEstilo,precio,UrlImagen")] Cerveza cerveza)
         {
             if (id != cerveza.id)
             {
@@ -103,6 +120,30 @@ namespace TiendaWeb.Areas.Admin.Controllers
             {
                 try
                 {
+                    string rutaPrincipal = _hostEnviroment.WebRootPath;
+                    var archivos = HttpContext.Request.Form.Files;
+                    if (archivos.Count > 0)
+                    {
+                        Cerveza? cervezabd = await _context.Cervezas.FindAsync(id);
+                        if (cervezabd != null && cervezabd.UrlImagen != null)
+                        {
+                            var rutaImagenActual = Path.Combine(rutaPrincipal, cervezabd.UrlImagen);
+                            if (System.IO.File.Exists(rutaImagenActual))
+                            {
+                                System.IO.File.Delete(rutaImagenActual);
+                            }
+                        }
+                        _context.Entry(cervezabd).State = EntityState.Detached;
+                        string nombreArchivo = Guid.NewGuid().ToString();
+                        var subidas = Path.Combine(rutaPrincipal, @"imagenes\cervezas");
+                        var extension = Path.GetExtension(archivos[0].FileName);
+                        using (var fileStream = new FileStream(Path.Combine(subidas, nombreArchivo + extension), FileMode.Create))
+                        {
+                            archivos[0].CopyTo(fileStream);
+                        }
+                        cerveza.UrlImagen = @"imagenes\cervezas\" + nombreArchivo + extension;
+                        _context.Entry(cerveza).State = EntityState.Modified;
+                    }
                     _context.Update(cerveza);
                     await _context.SaveChangesAsync();
                 }
@@ -115,7 +156,7 @@ namespace TiendaWeb.Areas.Admin.Controllers
                     else
                     {
                         throw;
-                    }
+                    } 
                 }
                 return RedirectToAction(nameof(Index));
             }
